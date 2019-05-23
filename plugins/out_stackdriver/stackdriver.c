@@ -512,7 +512,13 @@ static void cb_stackdriver_flush(void *data, size_t bytes,
     /* Get upstream connection */
     u_conn = flb_upstream_conn_get(ctx->u);
     if (!u_conn) {
-        FLB_OUTPUT_RETURN(FLB_RETRY);
+        ctx->u->flags |= FLB_IO_IPV6;
+        u_conn = flb_upstream_conn_get(ctx->u);
+        if (!u_conn) {
+            flb_error("[out_stackdriver] cannot get upstream connection");
+            ctx->u->flags &= ~FLB_IO_IPV6;
+            FLB_OUTPUT_RETURN(FLB_RETRY);
+        }
     }
 
     /* Reformat msgpack to stackdriver JSON payload */
